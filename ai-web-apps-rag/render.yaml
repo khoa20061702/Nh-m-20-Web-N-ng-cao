@@ -18,8 +18,6 @@ services:
       - key: CORS_ORIGINS
         sync: false
       - key: USE_FASTEMBED
-        value: "true"
-      - key: FASTEMBED_MODEL
-        value: sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+        value: "false"
       - key: USE_RERANKER
         value: "false"

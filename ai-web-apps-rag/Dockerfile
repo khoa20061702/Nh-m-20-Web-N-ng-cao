@@ -6,45 +6,56 @@ RUN npm install --no-audit --no-fund
 COPY web/ ./
 RUN npm run build
 
-# ---- Tầng 2: API Python tối giản cho Render free (512 MB RAM) ----
-# KHÔNG cài torch/transformers/sentence-transformers (~400 MB) —
-# dùng fastembed (ONNX runtime, ~80 MB) và pre-download model lúc build.
+# ---- Tầng 2: pre-build FAISS index ----
+# Dùng fastembed (ONNX) để embed KB lúc BUILD, không lúc runtime.
+FROM python:3.11-slim AS indexer
+WORKDIR /build
+
+RUN apt-get update && apt-get install -y --no-install-recommends libgomp1 && rm -rf /var/lib/apt/lists/*
+RUN pip install --no-cache-dir faiss-cpu fastembed numpy
+
+COPY data/ data/
+COPY config.py .
+COPY core/llm.py core/llm.py
+COPY core/__init__.py core/__init__.py
+COPY scripts/build_index.py scripts/build_index.py
+
+# Pre-build FAISS index với model đa ngôn ngữ nhỏ (ONNX ~30MB)
+# bge-small-en-v1.5 hỗ trợ tiếng Việt ở mức cơ bản
+# Nếu muốn chất lượng tốt hơn có thể đổi sang multilingual-e5-small
+RUN python scripts/build_index.py --model BAAI/bge-small-en-v1.5
+
+# ---- Tầng 3: API Python siêu nhẹ cho Render free (512 MB RAM) ----
+# Không có torch, không có transformers, không có sentence-transformers.
+# Startup RAM: faiss load index (~5MB) + fastapi + uvicorn ≈ ~80MB
+# Query RAM: gọi OpenAI Embeddings API (0 MB local model) ← KHÔNG tốn RAM
 FROM python:3.11-slim
 WORKDIR /app
 
 RUN apt-get update && apt-get install -y --no-install-recommends libgomp1 && rm -rf /var/lib/apt/lists/*
 
-# Cài dependencies nhẹ (không có torch)
 COPY requirements-render.txt .
 RUN pip install --no-cache-dir -r requirements-render.txt
-
-# Pre-download fastembed model vào image lúc BUILD để không download lúc runtime
-ENV FASTEMBED_CACHE_PATH=/app/.cache/fastembed
-RUN python -c "\
-from fastembed import TextEmbedding; \
-m = TextEmbedding(model_name='sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2', cache_dir='/app/.cache/fastembed'); \
-list(m.embed(['test'])); \
-print('fastembed model pre-downloaded OK')"
 
 COPY config.py ./
 COPY core/ core/
 COPY api/ api/
 COPY data/ data/
 COPY artifacts/ artifacts/
+# Copy pre-built index từ tầng indexer
+COPY --from=indexer /build/data/prebuilt_index data/prebuilt_index
 COPY --from=web /web/dist web/dist
 
 ENV APP_ROOT=/app \
     HF_HOME=/app/.cache/hf \
-    FASTEMBED_CACHE_PATH=/app/.cache/fastembed \
     LLM_BACKEND=openai_compatible \
-    USE_FASTEMBED=true \
-    FASTEMBED_MODEL=sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2 \
+    USE_FASTEMBED=false \
     USE_RERANKER=false \
     ENABLED_MODELS=llm
 
 RUN useradd -m app && chown -R app /app
 USER app
 EXPOSE 7860
-HEALTHCHECK --interval=30s --timeout=10s --start-period=90s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
   CMD python -c "from urllib.request import urlopen; urlopen('http://127.0.0.1:7860/api/health', timeout=5)"
 CMD ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "7860"]

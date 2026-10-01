@@ -1,4 +1,5 @@
 """Ứng dụng 4 — Chatbot RAG: tra cứu tài liệu (embeddings + FAISS) rồi để LLM trả lời có dẫn nguồn."""
+import json
 import os
 import re
 import threading
@@ -155,48 +156,97 @@ def _build_embedder(model_name: str):
     )
 
 
+_PREBUILT_DIR = DATA_DIR / "prebuilt_index"
+
+
+def _embed_via_openai(texts: list[str], model: str = "text-embedding-3-small") -> "np.ndarray":
+    """Gọi OpenAI Embeddings API — không cần local model, ~$0.00002/1K tokens."""
+    import requests
+    resp = requests.post(
+        f"{LLM_BASE_URL}/embeddings",
+        headers={"Authorization": f"Bearer {LLM_API_KEY}", "Content-Type": "application/json"},
+        json={"model": model, "input": texts},
+        timeout=30,
+    )
+    resp.raise_for_status()
+    data = sorted(resp.json()["data"], key=lambda x: x["index"])
+    mat = np.array([d["embedding"] for d in data], dtype="float32")
+    norms = np.linalg.norm(mat, axis=1, keepdims=True)
+    return mat / np.where(norms == 0, 1, norms)
+
+
 class Retriever:
-    def __init__(self, chunks: list[dict], model_name: str = EMBED_MODEL):
-        if not chunks:
-            raise ValueError("Kho tri thức trống; hãy thêm ít nhất một file .md vào data/kb/")
-        self.chunks = chunks
-        self._embedder, self._encode = _build_embedder(model_name)
-        # Reranker chỉ khởi tạo khi có CrossEncoder
-        _use_rerank = USE_RERANKER and _CrossEncoder is not None
-        self.reranker = _CrossEncoder(RERANKER_MODEL) if _use_rerank else None
-        embs = self._encode([c["text"] for c in chunks])
-        self.index = faiss.IndexFlatIP(embs.shape[1])
-        self.index.add(embs)
+    """Load pre-built FAISS index nếu có; nếu không tự build lúc khởi động.
+
+    Ưu tiên embed query:
+      1. OpenAI Embeddings API (không cần local model, rất nhẹ RAM)
+      2. fastembed ONNX (local, nhẹ hơn torch)
+      3. sentence-transformers (fallback cuối)
+    """
+
+    def __init__(self, chunks: list[dict] | None = None, model_name: str = EMBED_MODEL):
+        prebuilt_index = _PREBUILT_DIR / "index.faiss"
+        prebuilt_chunks = _PREBUILT_DIR / "chunks.json"
+
+        if prebuilt_index.exists() and prebuilt_chunks.exists():
+            # --- Mode nhẹ: load index từ disk, không embed lại ---
+            self.chunks = json.loads(prebuilt_chunks.read_text(encoding="utf-8"))
+            self.index = faiss.read_index(str(prebuilt_index))
+            meta_path = _PREBUILT_DIR / "meta.json"
+            meta = json.loads(meta_path.read_text(encoding="utf-8")) if meta_path.exists() else {}
+            self._prebuilt_embed_model = meta.get("embed_model", "text-embedding-3-small")
+            self._use_api_embed = (
+                bool(LLM_API_KEY)
+                and "text-embedding" in self._prebuilt_embed_model
+            )
+            self._local_encode = None  # lazy load nếu cần
+            import logging
+            logging.getLogger("api").info(
+                "Loaded pre-built FAISS index (%d chunks, embed=%s, api_embed=%s)",
+                len(self.chunks), self._prebuilt_embed_model, self._use_api_embed
+            )
+        else:
+            # --- Fallback: build lúc khởi động (chậm, tốn RAM) ---
+            if not chunks:
+                raise ValueError("Kho tri thức trống; hãy thêm ít nhất một file .md vào data/kb/")
+            self.chunks = chunks
+            self._prebuilt_embed_model = None
+            self._use_api_embed = False
+            self._local_encode: callable = _build_embedder(model_name)[1]
+            embs = self._local_encode([c["text"] for c in chunks])
+            self.index = faiss.IndexFlatIP(embs.shape[1])
+            self.index.add(embs)
+
+        self.reranker = None  # reranker tắt để tiết kiệm RAM
+
+    def _encode_query(self, query: str) -> "np.ndarray":
+        """Encode query: dùng API nếu có thể, nếu không dùng fastembed local (lazy-load)."""
+        if self._use_api_embed:
+            try:
+                return _embed_via_openai([query], model=self._prebuilt_embed_model)
+            except Exception:
+                pass  # fallback xuống local
+        if self._local_encode is None:
+            # Lazy-load fastembed với đúng model đã build index
+            model_to_load = self._prebuilt_embed_model or EMBED_MODEL
+            _, self._local_encode = _build_embedder(model_to_load)
+        return self._local_encode([query])
 
     def search(self, query: str, k: int = 3) -> list[dict]:
-        q = self._encode([query])
-        # Fetch nhiều candidates hơn cho reranking
+        q = self._encode_query(query)
         candidate_k = min(k * 4, len(self.chunks))
         scores, ids = self.index.search(q, candidate_k)
-
-        candidates = []
-        for s, i in zip(scores[0], ids[0]):
-            if i != -1:
-                candidates.append(dict(self.chunks[i]))
-
-        if not candidates:
-            return []
-        if self.reranker is None:
-            return candidates[:k]
-        # Rerank bằng CrossEncoder
-        pairs = [[query, c["text"]] for c in candidates]
-        rerank_scores = self.reranker.predict(pairs)
-
-        for c, score in zip(candidates, rerank_scores):
-            c["score"] = round(float(score), 4)
-
-        candidates.sort(key=lambda x: x["score"], reverse=True)
+        candidates = [dict(self.chunks[i]) for s, i in zip(scores[0], ids[0]) if i != -1]
         return candidates[:k]
+
 
 
 class RAGChatbot:
     def __init__(self, kb_dir: Path = DATA_DIR / "kb", model_name: str = LLM_MODEL):
-        self.retriever = Retriever(load_chunks(kb_dir))
+        # Thử load pre-built index trước; fallback sang build từ chunks
+        prebuilt_ok = (_PREBUILT_DIR / "index.faiss").exists()
+        chunks = None if prebuilt_ok else load_chunks(kb_dir)
+        self.retriever = Retriever(chunks=chunks)
         self.model_name = model_name
         self._lock = threading.Lock()  # 1 GPU → sinh lần lượt từng request
         self.tokenizer = None
