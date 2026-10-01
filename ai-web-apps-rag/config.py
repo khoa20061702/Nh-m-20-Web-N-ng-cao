@@ -3,19 +3,22 @@ import os
 import sys
 from pathlib import Path
 
-import torch
+try:
+    import torch as _torch
+    DEVICE = "cuda" if _torch.cuda.is_available() else "cpu"
+except ImportError:
+    _torch = None  # type: ignore
+    DEVICE = "cpu"
 
 ROOT = Path(os.environ.get("APP_ROOT", Path(__file__).resolve().parent))
 DATA_DIR = ROOT / "data"
 ART_DIR = ROOT / "artifacts"
 
-DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-
 # Trên một số máy macOS, PyTorch/FAISS có thể lỗi khi hai transformer dùng số
 # luồng CPU mặc định. Có thể đặt 0 để giữ mặc định của PyTorch.
 TORCH_NUM_THREADS = int(os.environ.get("TORCH_NUM_THREADS", "1" if sys.platform == "darwin" else "0"))
-if TORCH_NUM_THREADS > 0:
-    torch.set_num_threads(TORCH_NUM_THREADS)
+if _torch is not None and TORCH_NUM_THREADS > 0:
+    _torch.set_num_threads(TORCH_NUM_THREADS)
 
 # Mô hình (đổi tên model = đổi biến môi trường, không sửa code)
 YOLO_WEIGHTS = os.environ.get("YOLO_WEIGHTS", str(ART_DIR / "detector" / "yolo11n.pt"))

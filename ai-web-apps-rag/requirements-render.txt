@@ -1,0 +1,14 @@
+# Requirements tối giản cho Render free (512 MB RAM).
+# Bỏ torch/transformers/sentence-transformers nặng;
+# dùng LLM_BACKEND=openai_compatible + fastembed (ONNX) để tiết kiệm ~300 MB RAM.
+
+# --- RAG pipeline ---
+fastembed>=0.3.6          # embed nhẹ dùng ONNX runtime, không cần torch
+faiss-cpu>=1.8.0
+
+# --- API server ---
+fastapi>=0.115
+uvicorn[standard]
+python-multipart
+pillow
+requests

@@ -1,4 +1,5 @@
 """Ứng dụng 4 — Chatbot RAG: tra cứu tài liệu (embeddings + FAISS) rồi để LLM trả lời có dẫn nguồn."""
+import os
 import re
 import threading
 from pathlib import Path
@@ -6,9 +7,6 @@ from typing import Iterator
 
 import faiss
 import numpy as np
-import torch
-from sentence_transformers import SentenceTransformer, CrossEncoder
-from transformers import AutoModelForCausalLM, AutoTokenizer, TextIteratorStreamer
 
 from config import (
     DATA_DIR,
@@ -23,6 +21,47 @@ from config import (
     RERANKER_MODEL,
     USE_RERANKER,
 )
+
+# ---------------------------------------------------------------------------
+# Import nhẹ: ưu tiên fastembed (ONNX, ~80 MB) trước sentence-transformers
+# ---------------------------------------------------------------------------
+USE_FASTEMBED = os.environ.get("USE_FASTEMBED", "auto").lower()
+
+_fastembed_available = False
+try:
+    from fastembed import TextEmbedding as _FastEmbed
+    _fastembed_available = True
+except ImportError:
+    _FastEmbed = None  # type: ignore
+
+_st_available = False
+try:
+    from sentence_transformers import SentenceTransformer as _SentenceTransformer
+    _st_available = True
+except ImportError:
+    _SentenceTransformer = None  # type: ignore
+
+# CrossEncoder (reranker) — chỉ dùng khi sentence-transformers có mặt
+_CrossEncoder = None
+if _st_available and USE_RERANKER:
+    try:
+        from sentence_transformers import CrossEncoder as _CE
+        _CrossEncoder = _CE
+    except ImportError:
+        pass
+
+# Local LLM — chỉ load khi backend=local
+_transformers_available = False
+try:
+    import torch as _torch
+    from transformers import AutoModelForCausalLM, AutoTokenizer, TextIteratorStreamer
+    _transformers_available = True
+except ImportError:
+    _torch = None  # type: ignore
+    AutoModelForCausalLM = AutoTokenizer = TextIteratorStreamer = None  # type: ignore
+
+# Backward-compat alias
+torch = _torch
 
 SYSTEM_PROMPT = (
     "Bạn là trợ lý hỗ trợ sinh viên. "
@@ -83,39 +122,73 @@ def load_chunks(kb_dir: Path = DATA_DIR / "kb", max_chars: int = 600, overlap_ch
     return chunks
 
 
+def _build_embedder(model_name: str):
+    """Trả về (embedder, encode_fn) theo thứ tự ưu tiên: fastembed → sentence-transformers."""
+    prefer_fast = USE_FASTEMBED in ("true", "auto") and _fastembed_available
+    prefer_st   = USE_FASTEMBED == "false" or not _fastembed_available
+
+    if prefer_fast:
+        # fastembed map tên HuggingFace → tên nội bộ; dùng model nhẹ mặc định
+        fast_model = os.environ.get("FASTEMBED_MODEL", "BAAI/bge-small-en-v1.5")
+        embedder = _FastEmbed(model_name=fast_model)
+
+        def encode(texts: list[str]) -> np.ndarray:
+            vecs = list(embedder.embed(texts))
+            mat = np.stack(vecs).astype("float32")
+            norms = np.linalg.norm(mat, axis=1, keepdims=True)
+            return mat / np.where(norms == 0, 1, norms)
+
+        return embedder, encode
+
+    if _st_available:
+        device = DEVICE if _transformers_available else "cpu"
+        st = _SentenceTransformer(model_name, device=device)
+
+        def encode(texts: list[str]) -> np.ndarray:  # type: ignore[misc]
+            return st.encode(texts, normalize_embeddings=True, convert_to_numpy=True).astype("float32")
+
+        return st, encode
+
+    raise RuntimeError(
+        "Không tìm thấy thư viện embed nào. Cài fastembed hoặc sentence-transformers."
+    )
+
+
 class Retriever:
     def __init__(self, chunks: list[dict], model_name: str = EMBED_MODEL):
         if not chunks:
             raise ValueError("Kho tri thức trống; hãy thêm ít nhất một file .md vào data/kb/")
         self.chunks = chunks
-        self.embedder = SentenceTransformer(model_name, device=DEVICE)
-        self.reranker = CrossEncoder(RERANKER_MODEL, device=DEVICE) if USE_RERANKER else None
-        embs = self.embedder.encode([c["text"] for c in chunks], normalize_embeddings=True, convert_to_numpy=True)
+        self._embedder, self._encode = _build_embedder(model_name)
+        # Reranker chỉ khởi tạo khi có CrossEncoder
+        _use_rerank = USE_RERANKER and _CrossEncoder is not None
+        self.reranker = _CrossEncoder(RERANKER_MODEL) if _use_rerank else None
+        embs = self._encode([c["text"] for c in chunks])
         self.index = faiss.IndexFlatIP(embs.shape[1])
-        self.index.add(embs.astype("float32"))
+        self.index.add(embs)
 
     def search(self, query: str, k: int = 3) -> list[dict]:
-        q = self.embedder.encode([query], normalize_embeddings=True, convert_to_numpy=True).astype("float32")
+        q = self._encode([query])
         # Fetch nhiều candidates hơn cho reranking
         candidate_k = min(k * 4, len(self.chunks))
         scores, ids = self.index.search(q, candidate_k)
-        
+
         candidates = []
         for s, i in zip(scores[0], ids[0]):
             if i != -1:
                 candidates.append(dict(self.chunks[i]))
-                
+
         if not candidates:
             return []
-        if not USE_RERANKER:
-            return candidates[:k]   
+        if self.reranker is None:
+            return candidates[:k]
         # Rerank bằng CrossEncoder
         pairs = [[query, c["text"]] for c in candidates]
         rerank_scores = self.reranker.predict(pairs)
-        
+
         for c, score in zip(candidates, rerank_scores):
             c["score"] = round(float(score), 4)
-            
+
         candidates.sort(key=lambda x: x["score"], reverse=True)
         return candidates[:k]
 
@@ -128,8 +201,13 @@ class RAGChatbot:
         self.tokenizer = None
         self.model = None
         if LLM_BACKEND == "local":
+            if not _transformers_available:
+                raise RuntimeError(
+                    "LLM_BACKEND=local nhưng transformers chưa được cài. "
+                    "Đổi sang LLM_BACKEND=openai_compatible hoặc cài transformers."
+                )
             self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-            dtype = torch.float16 if DEVICE == "cuda" else torch.float32
+            dtype = _torch.float16 if DEVICE == "cuda" else _torch.float32
             self.model = AutoModelForCausalLM.from_pretrained(model_name, dtype=dtype).to(DEVICE).eval()
 
     def _messages(self, question: str, contexts: list[dict], history: list[dict] | None) -> list[dict]:
