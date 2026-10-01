@@ -10,12 +10,24 @@ RUN npm run build
 FROM python:3.11-slim
 WORKDIR /app
 
-# Chỉ cần libgomp cho faiss-cpu
+# Cần libgomp cho faiss-cpu
 RUN apt-get update && apt-get install -y --no-install-recommends libgomp1 && rm -rf /var/lib/apt/lists/*
 
-# Cài requirements nhẹ — KHÔNG có torch/transformers
+# Cài fastembed + faiss (KHÔNG có torch/transformers/sentence-transformers)
 COPY requirements-render.txt .
 RUN pip install --no-cache-dir -r requirements-render.txt
+
+# --- Pre-download fastembed model vào image lúc BUILD (không download lúc runtime) ---
+# Dùng model đa ngôn ngữ nhẹ hỗ trợ tiếng Việt
+ENV FASTEMBED_CACHE_PATH=/app/.cache/fastembed
+RUN python - <<'EOF'
+from fastembed import TextEmbedding
+# Download model vào /app/.cache/fastembed trong lúc build
+model = TextEmbedding(model_name="sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2", cache_dir="/app/.cache/fastembed")
+# Chạy thử để chắc chắn model đã được cache
+list(model.embed(["test"]))
+print("Model pre-downloaded OK")
+EOF
 
 COPY config.py ./
 COPY core/ core/
@@ -25,19 +37,18 @@ COPY artifacts/ artifacts/
 COPY --from=web /web/dist web/dist
 
 ENV APP_ROOT=/app \
-    HF_HOME=/app/.cache \
+    HF_HOME=/app/.cache/hf \
+    FASTEMBED_CACHE_PATH=/app/.cache/fastembed \
     LLM_BACKEND=openai_compatible \
-    # Dùng fastembed (ONNX) thay sentence-transformers
     USE_FASTEMBED=true \
-    FASTEMBED_MODEL=BAAI/bge-small-en-v1.5 \
-    # Tắt reranker để tiết kiệm thêm RAM
+    # Cùng model với sentence-transformers cũ để vector space tương thích
+    FASTEMBED_MODEL=sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2 \
     USE_RERANKER=false \
-    # Tắt YOLO/CLIP/classifier — chỉ giữ RAG + LLM API
     ENABLED_MODELS=llm
 
 RUN useradd -m app && chown -R app /app
 USER app
 EXPOSE 7860
-HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
-  CMD python -c "from urllib.request import urlopen; urlopen('http://127.0.0.1:7860/api/health', timeout=3)"
+HEALTHCHECK --interval=30s --timeout=10s --start-period=90s --retries=3 \
+  CMD python -c "from urllib.request import urlopen; urlopen('http://127.0.0.1:7860/api/health', timeout=5)"
 CMD ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "7860"]

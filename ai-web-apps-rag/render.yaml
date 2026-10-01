@@ -2,7 +2,6 @@ services:
   - type: web
     name: ai-web-apps-rag
     runtime: docker
-    dockerfilePath: ./Dockerfile.render   # <-- Dockerfile tối giản, không có torch
     plan: free
     healthCheckPath: /api/health
     envVars:
@@ -18,10 +17,9 @@ services:
         value: gpt-4o-mini
       - key: CORS_ORIGINS
         sync: false
-      # --- Tối ưu RAM ---
       - key: USE_FASTEMBED
         value: "true"
       - key: FASTEMBED_MODEL
-        value: BAAI/bge-small-en-v1.5
+        value: sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
       - key: USE_RERANKER
         value: "false"

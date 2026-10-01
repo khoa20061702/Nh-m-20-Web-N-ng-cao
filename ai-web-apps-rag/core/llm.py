@@ -130,7 +130,8 @@ def _build_embedder(model_name: str):
     if prefer_fast:
         # fastembed map tên HuggingFace → tên nội bộ; dùng model nhẹ mặc định
         fast_model = os.environ.get("FASTEMBED_MODEL", "BAAI/bge-small-en-v1.5")
-        embedder = _FastEmbed(model_name=fast_model)
+        cache_dir = os.environ.get("FASTEMBED_CACHE_PATH")  # None → fastembed default
+        embedder = _FastEmbed(model_name=fast_model, cache_dir=cache_dir)
 
         def encode(texts: list[str]) -> np.ndarray:
             vecs = list(embedder.embed(texts))
