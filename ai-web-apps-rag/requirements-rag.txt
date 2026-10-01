@@ -1,0 +1,11 @@
+# Runtime tối thiểu để deploy riêng ứng dụng 4 — Chatbot RAG.
+torch
+transformers>=4.56
+sentence-transformers>=3.0
+accelerate
+faiss-cpu
+fastapi>=0.115
+uvicorn[standard]
+python-multipart
+pillow
+requests

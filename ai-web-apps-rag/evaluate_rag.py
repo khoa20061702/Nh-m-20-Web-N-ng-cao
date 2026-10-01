@@ -1,7 +1,8 @@
 import json
+from datetime import datetime, timezone
 from pathlib import Path
 from core.llm import Retriever, load_chunks
-from config import DATA_DIR
+from config import DATA_DIR, EMBED_MODEL, RERANKER_MODEL
 
 def evaluate_hit_at_k(questions_file: str, kb_dir: Path, k: int = 3):
     print(f"Loading chunks from {kb_dir}...")
@@ -52,7 +53,15 @@ def evaluate_hit_at_k(questions_file: str, kb_dir: Path, k: int = 3):
     print(f"\nResult: {hits}/{total} hits -> Hit@{k} = {hit_rate:.2%}")
     
     # Save metric
-    metrics = {"Hit@3": hit_rate, "total_questions": total, "dataset": "so_tay_sinh_vien"}
+    metrics = {
+        "Hit@3": hit_rate,
+        "total_questions": total,
+        "dataset": "so_tay_sinh_vien",
+        "chunks": len(chunks),
+        "embed_model": EMBED_MODEL,
+        "reranker_model": RERANKER_MODEL,
+        "measured_at_utc": datetime.now(timezone.utc).isoformat(),
+    }
     metrics_path = Path("artifacts/rag_metrics.json")
     metrics_path.parent.mkdir(parents=True, exist_ok=True)
     metrics_path.write_text(json.dumps(metrics, indent=2))

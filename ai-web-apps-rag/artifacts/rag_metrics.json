@@ -1,5 +1,9 @@
 {
-  "Hit@3": 0.9666666666666667,
+  "Hit@3": 1.0,
   "total_questions": 30,
-  "dataset": "so_tay_sinh_vien"
+  "dataset": "so_tay_sinh_vien",
+  "chunks": 24,
+  "embed_model": "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
+  "reranker_model": "cross-encoder/ms-marco-MiniLM-L-6-v2",
+  "measured_at_utc": "2026-10-01T03:55:20.351150+00:00"
 }

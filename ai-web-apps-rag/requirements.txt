@@ -10,3 +10,4 @@ fastapi>=0.115
 uvicorn[standard]
 python-multipart
 pillow
+requests

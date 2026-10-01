@@ -8,6 +8,7 @@ import sys
 import time
 from contextlib import asynccontextmanager
 from pathlib import Path
+from typing import Literal
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # để import config, core khi chạy uvicorn
 
@@ -16,7 +17,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from PIL import Image, UnidentifiedImageError
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from config import CORS_ORIGINS, DEVICE, ENABLED_MODELS, MAX_UPLOAD_MB, ROOT, resolve_path
 
@@ -142,16 +143,34 @@ def gallery(item_id: int):
 
 
 # ---------- 4. Chatbot RAG ----------
+class ChatTurn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    role: Literal["user", "assistant"]
+    content: str = Field(..., min_length=1, max_length=2000)
+
+
 class ChatRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     message: str = Field(..., min_length=1, max_length=1000)
-    history: list[dict] = Field(default_factory=list)
+    history: list[ChatTurn] = Field(default_factory=list, max_length=6)
+
+
+def _clean_chat_request(req: ChatRequest) -> tuple[str, list[dict]]:
+    message = req.message.strip()
+    if not message:
+        raise HTTPException(400, "Câu hỏi không được chỉ gồm khoảng trắng")
+    history = [{"role": item.role, "content": item.content.strip()} for item in req.history]
+    if any(not item["content"] for item in history):
+        raise HTTPException(400, "Nội dung lịch sử trò chuyện không được để trống")
+    return message, history
 
 
 @app.post("/api/chat")
 def chat(req: ChatRequest):
     """Server-Sent Events: sự kiện 'sources' trước, sau đó từng 'token', cuối cùng 'done'."""
+    message, history = _clean_chat_request(req)
     bot = _require("llm")
-    contexts, tokens = bot.stream(req.message, req.history)
+    contexts, tokens = bot.stream(message, history)
 
     def events():
         yield f"data: {json.dumps({'type': 'sources', 'items': contexts}, ensure_ascii=False)}\n\n"
@@ -164,7 +183,8 @@ def chat(req: ChatRequest):
 
 @app.post("/api/chat/sync")
 def chat_sync(req: ChatRequest):
-    return _require("llm").answer(req.message, req.history)
+    message, history = _clean_chat_request(req)
+    return _require("llm").answer(message, history)
 
 
 # ---------- Giao diện React (nếu đã build) ----------

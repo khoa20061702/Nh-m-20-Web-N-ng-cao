@@ -45,8 +45,8 @@ def upload(label: str, key: str):
     return f
 
 
-st.title("🤖 AI Web Apps")
-st.caption("Phân loại ảnh · Phát hiện đối tượng · Tìm kiếm ảnh · Chatbot RAG — một backend FastAPI, hai giao diện Streamlit & React")
+st.title("🎓 Trợ lý học vụ RAG")
+st.caption("Trả lời dựa trên kho tài liệu đã cung cấp. Luôn kiểm tra nguồn trước khi đưa ra quyết định quan trọng.")
 tab1, tab2, tab3, tab4 = st.tabs(["🌼 Phân loại", "🚗 Phát hiện", "🔎 Tìm ảnh", "💬 Chatbot"])
 
 with tab1:
@@ -94,7 +94,7 @@ with tab3:
             cols[i % 4].image(img_bytes, caption=f"{r['label']} · {r['score']:.3f}", width="stretch")
 
 with tab4:
-    st.info("Trợ lý ShopLite trả lời dựa trên tài liệu chính sách (RAG). Thử: *Đổi trả trong bao lâu?*")
+    st.info("Trợ lý trả lời dựa trên sổ tay sinh viên. Thử: *CPA tối thiểu để nhận đồ án tốt nghiệp là bao nhiêu?*")
     if "chat" not in st.session_state:
         st.session_state.chat = []
     for m in st.session_state.chat:

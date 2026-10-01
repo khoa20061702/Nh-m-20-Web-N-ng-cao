@@ -1,1 +1,10 @@
 .venv/
+.env
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+web/node_modules/
+web/dist/
+artifacts/benchmark*.json

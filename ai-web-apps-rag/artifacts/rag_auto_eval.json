@@ -1,5 +1,7 @@
 {
-  "accuracy": 0.0,
+  "status": "invalid",
+  "reason": "Lần chạy cũ lỗi endpoint API; 0/30 không phải Accuracy hợp lệ. Chạy lại evaluate_llm_answers.py sau khi cấu hình LLM.",
+  "accuracy": null,
   "correct_count": 0,
   "total": 30,
   "details": [

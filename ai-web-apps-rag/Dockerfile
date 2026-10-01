@@ -10,9 +10,9 @@ RUN npm run build
 FROM python:3.11-slim
 WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends libgl1 libglib2.0-0 && rm -rf /var/lib/apt/lists/*
-COPY requirements.txt .
-RUN pip install --no-cache-dir torch torchvision --index-url https://download.pytorch.org/whl/cpu \
- && pip install --no-cache-dir -r requirements.txt
+COPY requirements-rag.txt .
+RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu \
+ && pip install --no-cache-dir -r requirements-rag.txt
 COPY config.py ./
 COPY core/ core/
 COPY api/ api/
@@ -23,4 +23,5 @@ ENV APP_ROOT=/app HF_HOME=/app/.cache LLM_MODEL=Qwen/Qwen2.5-0.5B-Instruct
 RUN useradd -m app && chown -R app /app
 USER app
 EXPOSE 7860
+HEALTHCHECK --interval=30s --timeout=5s --start-period=120s --retries=3 CMD python -c "from urllib.request import urlopen; urlopen('http://127.0.0.1:7860/api/health', timeout=3)"
 CMD ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "7860"]

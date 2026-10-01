@@ -34,8 +34,8 @@ export default function Chat() {
 
   return (
     <section className="chat">
-      <h2>Trợ lý ShopLite (RAG)</h2>
-      <p className="muted">Bạn đang trò chuyện với AI. Câu trả lời dựa trên tài liệu chính sách và có thể sai.</p>
+      <h2>Trợ lý học vụ (RAG)</h2>
+      <p className="muted">Câu trả lời dựa trên kho tài liệu đã cung cấp và có thể sai. Hãy kiểm tra nguồn trước khi ra quyết định quan trọng.</p>
       <div className="messages" aria-live="polite">
         {messages.map((m, i) => (
           <div key={i} className={`msg ${m.role}`}>
@@ -49,7 +49,7 @@ export default function Chat() {
         ))}
       </div>
       <form className="row" onSubmit={send}>
-        <input value={input} onChange={(e) => setInput(e.target.value)} placeholder="Đổi trả trong bao lâu?" aria-label="Câu hỏi" />
+        <input value={input} onChange={(e) => setInput(e.target.value)} placeholder="CPA tối thiểu để nhận đồ án tốt nghiệp là bao nhiêu?" aria-label="Câu hỏi" />
         {busy
           ? <button type="button" className="button" onClick={() => abortRef.current?.abort()}>Dừng</button>
           : <button type="submit" className="button">Gửi</button>}
