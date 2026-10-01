@@ -26,6 +26,7 @@ LLM_MODEL = os.environ.get(
     "Qwen/Qwen2.5-1.5B-Instruct" if DEVICE == "cuda" else "Qwen/Qwen2.5-0.5B-Instruct",
 )
 RERANKER_MODEL = os.environ.get("RERANKER_MODEL", "cross-encoder/ms-marco-MiniLM-L-6-v2")
+USE_RERANKER = os.environ.get("USE_RERANKER", "true").lower() == "true"
 
 # Lớp sinh có thể chạy cục bộ hoặc qua một API tương thích OpenAI. Không đặt
 # khoá trong mã nguồn: xem .env.example để cấu hình khi triển khai.

@@ -21,6 +21,7 @@ from config import (
     LLM_MODEL,
     LLM_REQUEST_TIMEOUT,
     RERANKER_MODEL,
+    USE_RERANKER,
 )
 
 SYSTEM_PROMPT = (
@@ -88,7 +89,7 @@ class Retriever:
             raise ValueError("Kho tri thức trống; hãy thêm ít nhất một file .md vào data/kb/")
         self.chunks = chunks
         self.embedder = SentenceTransformer(model_name, device=DEVICE)
-        self.reranker = CrossEncoder(RERANKER_MODEL, device=DEVICE)
+        self.reranker = CrossEncoder(RERANKER_MODEL, device=DEVICE) if USE_RERANKER else None
         embs = self.embedder.encode([c["text"] for c in chunks], normalize_embeddings=True, convert_to_numpy=True)
         self.index = faiss.IndexFlatIP(embs.shape[1])
         self.index.add(embs.astype("float32"))
@@ -106,7 +107,8 @@ class Retriever:
                 
         if not candidates:
             return []
-            
+        if not USE_RERANKER:
+            return candidates[:k]   
         # Rerank bằng CrossEncoder
         pairs = [[query, c["text"]] for c in candidates]
         rerank_scores = self.reranker.predict(pairs)
