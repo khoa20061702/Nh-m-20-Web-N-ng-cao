@@ -7,7 +7,7 @@ from typing import Iterator
 import faiss
 import numpy as np
 import torch
-from sentence_transformers import SentenceTransformer
+from sentence_transformers import SentenceTransformer, CrossEncoder
 from transformers import AutoModelForCausalLM, AutoTokenizer, TextIteratorStreamer
 
 from config import DATA_DIR, DEVICE, EMBED_MODEL, LLM_MODEL
@@ -21,8 +21,8 @@ SYSTEM_PROMPT = (
 )
 
 
-def load_chunks(kb_dir: Path = DATA_DIR / "kb", max_chars: int = 600) -> list[dict]:
-    """Chia mỗi file Markdown theo tiêu đề '## ', đoạn dài thì cắt theo đoạn văn."""
+def load_chunks(kb_dir: Path = DATA_DIR / "kb", max_chars: int = 600, overlap_chars: int = 150) -> list[dict]:
+    """Chia file Markdown với chunking có chồng lấn (overlap)."""
     chunks = []
     for path in sorted(Path(kb_dir).glob("*.md")):
         text = path.read_text(encoding="utf-8")
@@ -30,14 +30,29 @@ def load_chunks(kb_dir: Path = DATA_DIR / "kb", max_chars: int = 600) -> list[di
             section = section.strip()
             if not section:
                 continue
-            buf = ""
-            for para in section.split("\n\n"):
-                if len(buf) + len(para) > max_chars and buf:
-                    chunks.append({"source": path.name, "text": buf.strip()})
-                    buf = ""
-                buf += para + "\n\n"
-            if buf.strip():
-                chunks.append({"source": path.name, "text": buf.strip()})
+            start = 0
+            while start < len(section):
+                end = start + max_chars
+                if end < len(section):
+                    # Tìm khoảng trắng hoặc xuống dòng để cắt từ
+                    break_point = section.rfind("\n", start, end)
+                    if break_point == -1:
+                        break_point = section.rfind(" ", start, end)
+                    if break_point > start:
+                        end = break_point
+                
+                chunk_text = section[start:end].strip()
+                if chunk_text:
+                    chunks.append({"source": path.name, "text": chunk_text})
+                
+                if end == len(section):
+                    break
+                
+                start = end - overlap_chars
+                # Đẩy start tới khoảng trắng gần nhất để không cắt giữa từ
+                next_space = section.find(" ", start, end)
+                if next_space != -1:
+                    start = next_space + 1
     return chunks
 
 
@@ -45,14 +60,34 @@ class Retriever:
     def __init__(self, chunks: list[dict], model_name: str = EMBED_MODEL):
         self.chunks = chunks
         self.embedder = SentenceTransformer(model_name, device=DEVICE)
+        self.reranker = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2", device=DEVICE)
         embs = self.embedder.encode([c["text"] for c in chunks], normalize_embeddings=True, convert_to_numpy=True)
         self.index = faiss.IndexFlatIP(embs.shape[1])
         self.index.add(embs.astype("float32"))
 
     def search(self, query: str, k: int = 3) -> list[dict]:
         q = self.embedder.encode([query], normalize_embeddings=True, convert_to_numpy=True).astype("float32")
-        scores, ids = self.index.search(q, k)
-        return [{**self.chunks[i], "score": round(float(s), 4)} for s, i in zip(scores[0], ids[0]) if i != -1]
+        # Fetch nhiều candidates hơn cho reranking
+        candidate_k = min(k * 4, len(self.chunks))
+        scores, ids = self.index.search(q, candidate_k)
+        
+        candidates = []
+        for s, i in zip(scores[0], ids[0]):
+            if i != -1:
+                candidates.append(self.chunks[i])
+                
+        if not candidates:
+            return []
+            
+        # Rerank bằng CrossEncoder
+        pairs = [[query, c["text"]] for c in candidates]
+        rerank_scores = self.reranker.predict(pairs)
+        
+        for c, score in zip(candidates, rerank_scores):
+            c["score"] = round(float(score), 4)
+            
+        candidates.sort(key=lambda x: x["score"], reverse=True)
+        return candidates[:k]
 
 
 class RAGChatbot:
@@ -76,8 +111,49 @@ class RAGChatbot:
     def stream(self, question: str, history: list[dict] | None = None, k: int = 3,
                max_new_tokens: int = 384) -> tuple[list[dict], Iterator[str]]:
         contexts = self.retriever.search(question, k)
+        messages = self._messages(question, contexts, history)
+        
+        import os
+        api_key = os.environ.get("OPENAI_API_KEY")
+        if api_key:
+            # Dùng OpenAI API format (có thể dùng với OpenAI, Gemini, Groq, v.v.)
+            import requests
+            import json
+            
+            base_url = os.environ.get("OPENAI_BASE_URL", "https://api.openai.com/v1")
+            model_id = os.environ.get("OPENAI_MODEL", "gpt-4o-mini")
+            
+            def token_iter():
+                try:
+                    res = requests.post(
+                        f"{base_url}/chat/completions",
+                        headers={"Authorization": f"Bearer {api_key}"},
+                        json={
+                            "model": model_id,
+                            "messages": messages,
+                            "stream": True,
+                            "max_tokens": max_new_tokens
+                        },
+                        stream=True,
+                        timeout=10
+                    )
+                    res.raise_for_status()
+                    for line in res.iter_lines():
+                        if line:
+                            line = line.decode('utf-8')
+                            if line.startswith("data: ") and line != "data: [DONE]":
+                                data = json.loads(line[6:])
+                                delta = data["choices"][0]["delta"]
+                                if "content" in delta:
+                                    yield delta["content"]
+                except Exception as e:
+                    yield f" [Lỗi gọi API: {str(e)}]"
+            
+            return contexts, token_iter()
+        
+        # Fallback về chạy local
         prompt = self.tokenizer.apply_chat_template(
-            self._messages(question, contexts, history), tokenize=False, add_generation_prompt=True
+            messages, tokenize=False, add_generation_prompt=True
         )
         inputs = self.tokenizer(prompt, return_tensors="pt").to(DEVICE)
         streamer = TextIteratorStreamer(self.tokenizer, skip_prompt=True, skip_special_tokens=True)

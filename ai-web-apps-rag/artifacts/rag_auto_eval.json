@@ -1,0 +1,187 @@
+{
+  "accuracy": 0.0,
+  "correct_count": 0,
+  "total": 30,
+  "details": [
+    {
+      "question": "Học kỳ chính kéo dài bao nhiêu tuần?",
+      "expected": "15 tuần thực học và 3 tuần thi",
+      "generated": "[Lỗi gọi API: 404 Client Error: Not Found for url: https://generativelanguage.googleapis.com/v1beta/openai//chat/completions]",
+      "correct": false
+    },
+    {
+      "question": "Tối đa sinh viên được đăng ký bao nhiêu tín chỉ trong học kỳ chính?",
+      "expected": "21 tín chỉ",
+      "generated": "[Lỗi gọi API: 404 Client Error: Not Found for url: https://generativelanguage.googleapis.com/v1beta/openai//chat/completions]",
+      "correct": false
+    },
+    {
+      "question": "Điểm thi cuối kỳ chiếm bao nhiêu phần trăm điểm học phần?",
+      "expected": "60%",
+      "generated": "[Lỗi gọi API: 404 Client Error: Not Found for url: https://generativelanguage.googleapis.com/v1beta/openai//chat/completions]",
+      "correct": false
+    },
+    {
+      "question": "Điểm thi cuối kỳ tối thiểu phải đạt bao nhiêu để môn học được tính là đạt?",
+      "expected": "4.0 trở lên",
+      "generated": "[Lỗi gọi API: 404 Client Error: Not Found for url: https://generativelanguage.googleapis.com/v1beta/openai//chat/completions]",
+      "correct": false
+    },
+    {
+      "question": "Sinh viên năm nhất sẽ bị cảnh báo học vụ nếu CPA dưới bao nhiêu?",
+      "expected": "Dưới 1.2",
+      "generated": "[Lỗi gọi API: 404 Client Error: Not Found for url: https://generativelanguage.googleapis.com/v1beta/openai//chat/completions]",
+      "correct": false
+    },
+    {
+      "question": "Sinh viên bị cảnh báo học vụ bao nhiêu lần liên tiếp thì bị buộc thôi học?",
+      "expected": "3 lần liên tiếp",
+      "generated": "[Lỗi gọi API: 404 Client Error: Not Found for url: https://generativelanguage.googleapis.com/v1beta/openai//chat/completions]",
+      "correct": false
+    },
+    {
+      "question": "Điều kiện để đạt học bổng loại Giỏi là gì?",
+      "expected": "GPA ≥ 3.2 và Điểm rèn luyện ≥ 80",
+      "generated": "[Lỗi gọi API: 404 Client Error: Not Found for url: https://generativelanguage.googleapis.com/v1beta/openai//chat/completions]",
+      "correct": false
+    },
+    {
+      "question": "Sinh viên thi lại có được xét học bổng không?",
+      "expected": "Không có môn nào thi lại trong học kỳ",
+      "generated": "[Lỗi gọi API: 404 Client Error: Not Found for url: https://generativelanguage.googleapis.com/v1beta/openai//chat/completions]",
+      "correct": false
+    },
+    {
+      "question": "Chuẩn đầu ra ngoại ngữ yêu cầu chứng chỉ gì?",
+      "expected": "TOEIC 500, IELTS 5.0, hoặc tương đương",
+      "generated": "[Lỗi gọi API: 404 Client Error: Not Found for url: https://generativelanguage.googleapis.com/v1beta/openai//chat/completions]",
+      "correct": false
+    },
+    {
+      "question": "Thời hạn của chứng chỉ ngoại ngữ là bao lâu tính đến lúc xét tốt nghiệp?",
+      "expected": "Không quá 2 năm",
+      "generated": "[Lỗi gọi API: 404 Client Error: Not Found for url: https://generativelanguage.googleapis.com/v1beta/openai//chat/completions]",
+      "correct": false
+    },
+    {
+      "question": "Thời gian thực tập doanh nghiệp kéo dài bao lâu?",
+      "expected": "Từ 2 đến 4 tháng",
+      "generated": "[Lỗi gọi API: 404 Client Error: Not Found for url: https://generativelanguage.googleapis.com/v1beta/openai//chat/completions]",
+      "correct": false
+    },
+    {
+      "question": "Điểm CPA tối thiểu để nhận đồ án tốt nghiệp là bao nhiêu?",
+      "expected": "CPA ≥ 2.0",
+      "generated": "[Lỗi gọi API: 404 Client Error: Not Found for url: https://generativelanguage.googleapis.com/v1beta/openai//chat/completions]",
+      "correct": false
+    },
+    {
+      "question": "Mỗi năm có bao nhiêu đợt xét tốt nghiệp?",
+      "expected": "3 đợt mỗi năm (tháng 3, tháng 7, và tháng 11)",
+      "generated": "[Lỗi gọi API: 404 Client Error: Not Found for url: https://generativelanguage.googleapis.com/v1beta/openai//chat/completions]",
+      "correct": false
+    },
+    {
+      "question": "Sinh viên nhận bằng tốt nghiệp tạm thời sau bao lâu?",
+      "expected": "Trong vòng 2 tuần sau khi có quyết định tốt nghiệp",
+      "generated": "[Lỗi gọi API: 404 Client Error: Not Found for url: https://generativelanguage.googleapis.com/v1beta/openai//chat/completions]",
+      "correct": false
+    },
+    {
+      "question": "Làm lại thẻ sinh viên mất bao nhiêu tiền và bao lâu?",
+      "expected": "50.000 VNĐ và làm lại trong 7 ngày làm việc",
+      "generated": "[Lỗi gọi API: 404 Client Error: Not Found for url: https://generativelanguage.googleapis.com/v1beta/openai//chat/completions]",
+      "correct": false
+    },
+    {
+      "question": "Vắng mặt Tuần sinh hoạt công dân không phép bị trừ bao nhiêu điểm rèn luyện?",
+      "expected": "Trừ 20 điểm rèn luyện",
+      "generated": "[Lỗi gọi API: 404 Client Error: Not Found for url: https://generativelanguage.googleapis.com/v1beta/openai//chat/completions]",
+      "correct": false
+    },
+    {
+      "question": "Điều kiện CPA để được học song bằng là bao nhiêu?",
+      "expected": "CPA của ngành thứ nhất ≥ 2.5",
+      "generated": "[Lỗi gọi API: 404 Client Error: Not Found for url: https://generativelanguage.googleapis.com/v1beta/openai//chat/completions]",
+      "correct": false
+    },
+    {
+      "question": "Sinh viên có được chuyển ngành sau năm học đầu tiên không?",
+      "expected": "Chỉ được xem xét trong năm học đầu tiên",
+      "generated": "[Lỗi gọi API: 404 Client Error: Not Found for url: https://generativelanguage.googleapis.com/v1beta/openai//chat/completions]",
+      "correct": false
+    },
+    {
+      "question": "Thời gian phúc khảo bài thi là bao lâu?",
+      "expected": "Trong vòng 7 ngày làm việc kể từ khi điểm được công bố",
+      "generated": "[Lỗi gọi API: 404 Client Error: Not Found for url: https://generativelanguage.googleapis.com/v1beta/openai//chat/completions]",
+      "correct": false
+    },
+    {
+      "question": "Lệ phí phúc khảo là bao nhiêu?",
+      "expected": "30.000 VNĐ/môn",
+      "generated": "[Lỗi gọi API: 404 Client Error: Not Found for url: https://generativelanguage.googleapis.com/v1beta/openai//chat/completions]",
+      "correct": false
+    },
+    {
+      "question": "Nhờ người thi hộ sẽ bị kỷ luật như thế nào?",
+      "expected": "Cảnh cáo, bị đình chỉ học 1 năm",
+      "generated": "[Lỗi gọi API: 404 Client Error: Not Found for url: https://generativelanguage.googleapis.com/v1beta/openai//chat/completions]",
+      "correct": false
+    },
+    {
+      "question": "Hành hung giảng viên bị xử lý như thế nào?",
+      "expected": "Buộc thôi học",
+      "generated": "[Lỗi gọi API: 404 Client Error: Not Found for url: https://generativelanguage.googleapis.com/v1beta/openai//chat/completions]",
+      "correct": false
+    },
+    {
+      "question": "Sinh viên được mượn tối đa bao nhiêu cuốn sách tại thư viện?",
+      "expected": "5 cuốn sách trong vòng 14 ngày",
+      "generated": "[Lỗi gọi API: 404 Client Error: Not Found for url: https://generativelanguage.googleapis.com/v1beta/openai//chat/completions]",
+      "correct": false
+    },
+    {
+      "question": "Phí lưu trú ký túc xá phòng 4 người có máy lạnh là bao nhiêu?",
+      "expected": "1.200.000 VNĐ/tháng",
+      "generated": "[Lỗi gọi API: 404 Client Error: Not Found for url: https://generativelanguage.googleapis.com/v1beta/openai//chat/completions]",
+      "correct": false
+    },
+    {
+      "question": "Vi phạm nội quy KTX bao nhiêu lần sẽ bị mời ra khỏi KTX?",
+      "expected": "3 lần",
+      "generated": "[Lỗi gọi API: 404 Client Error: Not Found for url: https://generativelanguage.googleapis.com/v1beta/openai//chat/completions]",
+      "correct": false
+    },
+    {
+      "question": "Sinh viên mặc quần đùi có được vào thư viện không?",
+      "expected": "Không được",
+      "generated": "[Lỗi gọi API: 404 Client Error: Not Found for url: https://generativelanguage.googleapis.com/v1beta/openai//chat/completions]",
+      "correct": false
+    },
+    {
+      "question": "Bảo hiểm tai nạn có bắt buộc không?",
+      "expected": "Là tự nguyện",
+      "generated": "[Lỗi gọi API: 404 Client Error: Not Found for url: https://generativelanguage.googleapis.com/v1beta/openai//chat/completions]",
+      "correct": false
+    },
+    {
+      "question": "Đối tượng nào được miễn 100% học phí?",
+      "expected": "Con thương binh liệt sĩ, sinh viên khuyết tật có hoàn cảnh khó khăn, sinh viên người dân tộc thiểu số ở vùng đặc biệt khó khăn",
+      "generated": "[Lỗi gọi API: 404 Client Error: Not Found for url: https://generativelanguage.googleapis.com/v1beta/openai//chat/completions]",
+      "correct": false
+    },
+    {
+      "question": "Chuyện gì xảy ra nếu sinh viên không tham gia đánh giá giảng viên?",
+      "expected": "Bị hệ thống chặn quyền xem điểm thi",
+      "generated": "[Lỗi gọi API: 404 Client Error: Not Found for url: https://generativelanguage.googleapis.com/v1beta/openai//chat/completions]",
+      "correct": false
+    },
+    {
+      "question": "Tham gia CLB được cộng tối đa bao nhiêu điểm rèn luyện?",
+      "expected": "Tối đa 10 điểm rèn luyện mỗi học kỳ",
+      "generated": "[Lỗi gọi API: 404 Client Error: Not Found for url: https://generativelanguage.googleapis.com/v1beta/openai//chat/completions]",
+      "correct": false
+    }
+  ]
+}

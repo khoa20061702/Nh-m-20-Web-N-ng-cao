@@ -1,0 +1,152 @@
+[
+  {
+    "question": "Học kỳ chính kéo dài bao nhiêu tuần?",
+    "expected_answer": "15 tuần thực học và 3 tuần thi",
+    "section": "1. Tổ chức đào tạo theo hệ thống tín chỉ"
+  },
+  {
+    "question": "Tối đa sinh viên được đăng ký bao nhiêu tín chỉ trong học kỳ chính?",
+    "expected_answer": "21 tín chỉ",
+    "section": "1. Tổ chức đào tạo theo hệ thống tín chỉ"
+  },
+  {
+    "question": "Điểm thi cuối kỳ chiếm bao nhiêu phần trăm điểm học phần?",
+    "expected_answer": "60%",
+    "section": "2. Đánh giá kết quả học tập"
+  },
+  {
+    "question": "Điểm thi cuối kỳ tối thiểu phải đạt bao nhiêu để môn học được tính là đạt?",
+    "expected_answer": "4.0 trở lên",
+    "section": "2. Đánh giá kết quả học tập"
+  },
+  {
+    "question": "Sinh viên năm nhất sẽ bị cảnh báo học vụ nếu CPA dưới bao nhiêu?",
+    "expected_answer": "Dưới 1.2",
+    "section": "3. Cảnh báo học vụ và Buộc thôi học"
+  },
+  {
+    "question": "Sinh viên bị cảnh báo học vụ bao nhiêu lần liên tiếp thì bị buộc thôi học?",
+    "expected_answer": "3 lần liên tiếp",
+    "section": "3. Cảnh báo học vụ và Buộc thôi học"
+  },
+  {
+    "question": "Điều kiện để đạt học bổng loại Giỏi là gì?",
+    "expected_answer": "GPA ≥ 3.2 và Điểm rèn luyện ≥ 80",
+    "section": "4. Học bổng khuyến khích học tập"
+  },
+  {
+    "question": "Sinh viên thi lại có được xét học bổng không?",
+    "expected_answer": "Không có môn nào thi lại trong học kỳ",
+    "section": "4. Học bổng khuyến khích học tập"
+  },
+  {
+    "question": "Chuẩn đầu ra ngoại ngữ yêu cầu chứng chỉ gì?",
+    "expected_answer": "TOEIC 500, IELTS 5.0, hoặc tương đương",
+    "section": "5. Quy định về chuẩn đầu ra ngoại ngữ và tin học"
+  },
+  {
+    "question": "Thời hạn của chứng chỉ ngoại ngữ là bao lâu tính đến lúc xét tốt nghiệp?",
+    "expected_answer": "Không quá 2 năm",
+    "section": "5. Quy định về chuẩn đầu ra ngoại ngữ và tin học"
+  },
+  {
+    "question": "Thời gian thực tập doanh nghiệp kéo dài bao lâu?",
+    "expected_answer": "Từ 2 đến 4 tháng",
+    "section": "6. Thực tập và Đồ án tốt nghiệp"
+  },
+  {
+    "question": "Điểm CPA tối thiểu để nhận đồ án tốt nghiệp là bao nhiêu?",
+    "expected_answer": "CPA ≥ 2.0",
+    "section": "6. Thực tập và Đồ án tốt nghiệp"
+  },
+  {
+    "question": "Mỗi năm có bao nhiêu đợt xét tốt nghiệp?",
+    "expected_answer": "3 đợt mỗi năm (tháng 3, tháng 7, và tháng 11)",
+    "section": "7. Quy trình xét tốt nghiệp"
+  },
+  {
+    "question": "Sinh viên nhận bằng tốt nghiệp tạm thời sau bao lâu?",
+    "expected_answer": "Trong vòng 2 tuần sau khi có quyết định tốt nghiệp",
+    "section": "7. Quy trình xét tốt nghiệp"
+  },
+  {
+    "question": "Làm lại thẻ sinh viên mất bao nhiêu tiền và bao lâu?",
+    "expected_answer": "50.000 VNĐ và làm lại trong 7 ngày làm việc",
+    "section": "8. Hỗ trợ sinh viên và Công tác Đoàn"
+  },
+  {
+    "question": "Vắng mặt Tuần sinh hoạt công dân không phép bị trừ bao nhiêu điểm rèn luyện?",
+    "expected_answer": "Trừ 20 điểm rèn luyện",
+    "section": "8. Hỗ trợ sinh viên và Công tác Đoàn"
+  },
+  {
+    "question": "Điều kiện CPA để được học song bằng là bao nhiêu?",
+    "expected_answer": "CPA của ngành thứ nhất ≥ 2.5",
+    "section": "9. Chuyển ngành và Học song bằng"
+  },
+  {
+    "question": "Sinh viên có được chuyển ngành sau năm học đầu tiên không?",
+    "expected_answer": "Chỉ được xem xét trong năm học đầu tiên",
+    "section": "9. Chuyển ngành và Học song bằng"
+  },
+  {
+    "question": "Thời gian phúc khảo bài thi là bao lâu?",
+    "expected_answer": "Trong vòng 7 ngày làm việc kể từ khi điểm được công bố",
+    "section": "10. Giải quyết khiếu nại về điểm thi"
+  },
+  {
+    "question": "Lệ phí phúc khảo là bao nhiêu?",
+    "expected_answer": "30.000 VNĐ/môn",
+    "section": "10. Giải quyết khiếu nại về điểm thi"
+  },
+  {
+    "question": "Nhờ người thi hộ sẽ bị kỷ luật như thế nào?",
+    "expected_answer": "Cảnh cáo, bị đình chỉ học 1 năm",
+    "section": "11. Các hình thức kỷ luật sinh viên"
+  },
+  {
+    "question": "Hành hung giảng viên bị xử lý như thế nào?",
+    "expected_answer": "Buộc thôi học",
+    "section": "11. Các hình thức kỷ luật sinh viên"
+  },
+  {
+    "question": "Sinh viên được mượn tối đa bao nhiêu cuốn sách tại thư viện?",
+    "expected_answer": "5 cuốn sách trong vòng 14 ngày",
+    "section": "12. Thư viện và Tài nguyên học liệu"
+  },
+  {
+    "question": "Phí lưu trú ký túc xá phòng 4 người có máy lạnh là bao nhiêu?",
+    "expected_answer": "1.200.000 VNĐ/tháng",
+    "section": "13. Ký túc xá"
+  },
+  {
+    "question": "Vi phạm nội quy KTX bao nhiêu lần sẽ bị mời ra khỏi KTX?",
+    "expected_answer": "3 lần",
+    "section": "13. Ký túc xá"
+  },
+  {
+    "question": "Sinh viên mặc quần đùi có được vào thư viện không?",
+    "expected_answer": "Không được",
+    "section": "14. Quy định về trang phục và tác phong"
+  },
+  {
+    "question": "Bảo hiểm tai nạn có bắt buộc không?",
+    "expected_answer": "Là tự nguyện",
+    "section": "15. Bảo hiểm Y tế và Bảo hiểm Tai nạn"
+  },
+  {
+    "question": "Đối tượng nào được miễn 100% học phí?",
+    "expected_answer": "Con thương binh liệt sĩ, sinh viên khuyết tật có hoàn cảnh khó khăn, sinh viên người dân tộc thiểu số ở vùng đặc biệt khó khăn",
+    "section": "16. Chế độ miễn giảm học phí"
+  },
+  {
+    "question": "Chuyện gì xảy ra nếu sinh viên không tham gia đánh giá giảng viên?",
+    "expected_answer": "Bị hệ thống chặn quyền xem điểm thi",
+    "section": "17. Đánh giá giảng viên và môn học"
+  },
+  {
+    "question": "Tham gia CLB được cộng tối đa bao nhiêu điểm rèn luyện?",
+    "expected_answer": "Tối đa 10 điểm rèn luyện mỗi học kỳ",
+    "section": "20. Câu lạc bộ và Đội nhóm"
+  }
+]
